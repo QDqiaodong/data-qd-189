@@ -1,0 +1,7 @@
+{
+  "vertices": [
+    {"id":"a","position":["0","0","0"]}, {"id":"b","position":["1","0","0"]},
+    {"id":"c","position":["0","1","0"]}, {"id":"d","position":["0","0","1"]}
+  ],
+  "faces": [{"id":"base","vertices":["a","b","c"]},{"id":"side1","vertices":["a","b","d"]},{"id":"side2","vertices":["a","d","c"]},{"id":"side3","vertices":["b","c","d"]}]
+}
