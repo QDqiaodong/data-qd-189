@@ -1,8 +1,14 @@
 import json
 from pathlib import Path
+import sys
 import unittest
-from mesh_shell.service import process
-from mesh_shell.topology import orientation
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / 'src') not in sys.path:
+    sys.path.insert(0, str(ROOT / 'src'))
+
+from mesh_shell.service import process  # noqa: E402
+from mesh_shell.topology import orientation  # noqa: E402
 
 def sample():return json.loads((Path(__file__).resolve().parents[1]/'fixtures/input.json').read_text())
 
