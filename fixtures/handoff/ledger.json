@@ -1,0 +1,26 @@
+{
+  "previous_mesh_sha256": "d1e75bd82a9ab45a8c30cd02ea791582bafa9e9c86e64c8eb5d67256390eb455",
+  "current_mesh_sha256": "c83a610b58a51965843a2159edbcbe4237103ee9aa344904295e2797efbca05d",
+  "previous_faces": [
+    {
+      "face_id": "old-a",
+      "surface_id": "SURF-1",
+      "verdict": "pass"
+    },
+    {
+      "face_id": "old-b",
+      "surface_id": "SURF-1",
+      "verdict": "pass"
+    }
+  ],
+  "current_faces": [
+    {
+      "face_id": "new-a",
+      "surface_id": "SURF-1"
+    },
+    {
+      "face_id": "new-b",
+      "surface_id": "SURF-1"
+    }
+  ]
+}

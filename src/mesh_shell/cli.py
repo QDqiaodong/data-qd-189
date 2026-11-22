@@ -12,9 +12,21 @@ def main(argv=None):
     parser.add_argument('--output', required=True)
     parser.add_argument('--material', action='store_true',
                         help='add the material settlement block to the report')
+    parser.add_argument('--previous',
+                        help='previous mesh JSON (used with --inspection-ledger)')
+    parser.add_argument('--inspection-ledger',
+                        help='inspection ledger JSON (used with --previous)')
     args = parser.parse_args(argv)
+    if (args.previous is None) != (args.inspection_ledger is None):
+        print('error: --previous and --inspection-ledger must be used together',
+              file=sys.stderr)
+        return 2
     try:
-        result = process(load(args.source), material=args.material)
+        data = load(args.source)
+        handoff = None
+        if args.previous is not None:
+            handoff = (load(args.previous), load(args.inspection_ledger))
+        result = process(data, material=args.material, handoff=handoff)
         publish(args.output, result)
     except (OSError, ValueError, UnicodeError, RecursionError) as error:
         print(f'error: {error}', file=sys.stderr)

@@ -1,8 +1,8 @@
-# data-qd-189 · 三角网格定向、闭壳体积与材料结算
+# data-qd-189 · 三角网格定向、闭壳体积、材料结算与质检交接
 
-从共享边关系建立面朝向约束，修复可定向分量并用闭壳有符号体积确定方向；保留开边、非流形边和冲突见证。可选的 `--material` 模式在同一份报告上增加离线材料结算：可放行零件、嵌套空腔的净体积，以及其余壳整组扣留的可追查理由。
+从共享边关系建立面朝向约束，修复可定向分量并用闭壳有符号体积确定方向；保留开边、非流形边和冲突见证。可选的 `--material` 模式在同一份报告上增加离线材料结算：可放行零件、嵌套空腔的净体积，以及其余壳整组扣留的可追查理由。成对使用的 `--previous` / `--inspection-ledger` 模式则在重三角化后的新版网格上生成复检清单，并逐张交代旧返修工单的责任去向。
 
-topology.py 建立连通/异或约束，shells.py 将定向结果用于体积与几何证据，geometry.py 提供精确三角形相交与点包含判定，material.py 做壳资格、接触/包含关系与结算分组，service.py 保留输入顶点身份并挂接材料区块。完整字段、单位、身份、见证与失败约定见 [数据契约](docs/contract.md)。样例是作者自制合成数据，许可见 [来源说明](fixtures/SOURCES.md)。
+topology.py 建立连通/异或约束，shells.py 将定向结果用于体积与几何证据，geometry.py 提供精确三角形相交与点包含判定，material.py 做壳资格、接触/包含关系与结算分组，handoff.py 做规范摘要、台账校验、共面面积归属与工单对账，service.py 保留输入顶点身份并挂接新增区块。完整字段、单位、身份、见证与失败约定见 [数据契约](docs/contract.md)。样例是作者自制合成数据，许可见 [来源说明](fixtures/SOURCES.md)。
 
 ## 安装、测试与演示
 
@@ -18,9 +18,13 @@ uv pip check --python .venv/bin/python
 .venv/bin/python -I -m unittest discover -s tests -v
 .venv/bin/mesh-shell --source fixtures/input.json --output run/report-initial.json
 .venv/bin/mesh-shell --source fixtures/input.json --output run/report-material.json --material
+.venv/bin/mesh-shell --source fixtures/handoff/current.json \
+  --output run/report-handoff.json \
+  --previous fixtures/handoff/previous.json \
+  --inspection-ledger fixtures/handoff/ledger.json
 ```
 
-实际21项测试通过（原7项 + 材料结算回归14项）；CLI 演示生成JSON。旧版摘要为：
+实际50项测试通过（原7项 + 材料结算回归14项 + 质检交接回归29项）；CLI 演示生成JSON。旧版摘要为：
 
 ```json
 {
@@ -43,7 +47,17 @@ uv pip check --python .venv/bin/python
 }
 ```
 
-输出是原子新建；演示已生成过的同名路径不能重用，复跑请换一个新文件名。非法输入与文件写入错误退出2；业务诊断（包括整组扣留）退出0并以 JSON 表达，见契约。已经实际核验重复JSON键拒绝、旧结果字节不变、已有符号链接不覆盖。
+输出是原子新建；演示已生成过的同名路径不能重用，复跑请换一个新文件名。非法输入与文件写入错误退出2；业务诊断（包括整组扣留、须复检、工单 `missing`/`ambiguous` 留置）退出0并以 JSON 表达，见契约。已经实际核验重复JSON键拒绝、旧结果字节不变、已有符号链接不覆盖。
+
+## 质检交接模式
+
+`--previous OLD.json --inspection-ledger LEDGER.json` 成对启用，可与 `--material` 同跑。台账必须逐面列出两个版本的所有面并携带两份网格的规范 SHA-256 摘要；摘要按解析后的精确坐标、排序后的顶点/面 ID 与排序后的三角面顶点计算，不受行顺序、小数等值写法与绕序影响。报告新增的 `inspection_handoff` 区块给出：
+
+- 每个新面六类互斥区域（`target_overlap`、`source_overlap`、`pass`、`reject`、`uninspected`、`no_previous`）占该面总面积的精确比例；只有 `pass` 比例恰为 1 的整张面标记 `inherited`，其余全部进入 `reinspection_face_ids`，不做部分合格签发。
+- 每个新面正面积相交的同检验面旧 ID、真正贡献 `pass` 凭证的旧面及比例，以及转派进入该面的工单 ID。
+- 从每张旧 `reject` 工单出发的对账：按新面 ID 列出的转派比例，以及 `missing`（无新版承接）与 `ambiguous`（多新版争抢）留置比例；分母统一是原旧面面积，合计为 1。
+
+面积归属只在同一 `surface_id` 且严格共面的面之间用精确半平面裁剪计算，点/边接触、跨检验面重合、偏离平面 `0.000001` 都不产生凭证。`fixtures/handoff/` 是斜面正方形换对角线划分的可跑示例：新版两张面各继承两张旧凭证、各占 `1/2`。
 
 ## 当前边界
 

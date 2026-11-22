@@ -122,3 +122,83 @@
 ## 稳定性
 
 相同几何与 ID 的输入，即使数组乱序、面三顶点循环移位或原绕序反转，新增 `material` 区块（其余旧报告字段同样）保持稳定：所有遍历顺序基于原 ID 字典序，绕序判定基于旧报告的规范化朝向，体积与长方体维数均与输入顺序无关。
+
+# 质检交接模式（--previous + --inspection-ledger）
+
+`--previous OLD.json --inspection-ledger LEDGER.json` 必须成对出现，只给一个是输入错误（退出 2）。两份网格各自沿用 v1 的格式、坐标边界与数量上限，面 ID 只在本版有效。不带这两个参数时，CLI、`process(data)` / `process(data, material=True)` 与报告字节不变；带参数时旧报告全部字段原样保留，另加顶层 `inspection_handoff` 对象。该模式可与 `--material` 同跑，材料结算与复检责任互不替代；开曲面也可以持有有效的旧质检凭证。所有计算离线、仅标准库，全部几何判定使用精确 `Fraction`，无浮点容差，不修改任何输入文件或工单。
+
+## 台账与摘要
+
+台账是严格 JSON，顶层恰有四个字段：`previous_mesh_sha256`、`current_mesh_sha256`、`previous_faces`、`current_faces`，不允许重复 JSON 键。
+
+- `previous_faces` 每行含 `face_id`、`surface_id`、`verdict`；`verdict` 只能是 `pass`、`reject`、`uninspected`。`reject` 行必须另有全表唯一的 `ticket_id`；其他结论带工单号、工单号重复都是输入错误。
+- `current_faces` 每行只含 `face_id`、`surface_id`。
+- 两个面数组都必须把该版本网格的**所有**面各列一次：缺项、未知 ID、重复 ID 均为输入错误。`surface_id` 与网格 ID 同语法；同一标识可对应多个三角面，也允许只在一个版本出现。
+- 两份网格先各自通过 v1 校验（未知顶点、退化面、重复三角面等同样拒绝），再校验摘要。
+
+摘要绑定实际网格内容，不绑定面 ID 列表。规范对象保留原 `vertices`、`faces` 结构：两数组各按 ID 排序；每个三角面的三个顶点 ID 排序；坐标取解析后的精确值并写成最简整数或分数字符串。对此对象按 JSON 键排序、无分隔空白（`separators=(',', ':')`）、UTF-8 编码后取 SHA-256 小写十六进制。因此导出行顺序、等值小数写法（如 `1.0` 与 `1`）、面绕序都不影响摘要；坐标真的变动会改变摘要。摘要不符即输入错误。
+
+## 共面与面积归属
+
+面积归属只在**同一 `surface_id` 且严格共面**的面之间发生：不同检验面标识即使几何完全重合也互不可见；平面以法向量（首个非零分量统一为正后归一化）和平面常数为精确键，离开原平面哪怕 `0.000001` 也不共面。点接触、边接触、非共面相交都不提供面积；不使用顶点匹配、包围盒、原 ID 相等或任何容差猜测。共面后取法向量最大分量对应的坐标轴做二维投影，二维面积比等于三维面积比。
+
+对每个新面，把同组新版面与同组旧版面所有相关三角形的支撑线切割该面，得到内部覆盖关系恒定的凸多边形分区（同一区域不会被重复计数）。每个分区按互斥优先级归入六类之一：
+
+1. 被任意另一**新版**面覆盖的区域：`target_overlap`，不论旧证据。
+2. 其余被两个或更多**旧**面覆盖的区域：`source_overlap`，即使旧结论一致也不能挑一张当凭证。
+3. 其余被恰好一个旧面覆盖的区域：按该旧面的 `verdict` 记 `pass`、`reject` 或 `uninspected`。
+4. 完全没有旧面覆盖的区域：`no_previous`。
+
+六类比例的分母都是该新面自身总面积，六类同时输出（含为零者），合计恰为 1，全部为最简整数或分数字符串。
+
+## `inspection_handoff` 字段
+
+```json
+"inspection_handoff": {
+  "current_faces": [{
+    "face_id": "...",
+    "surface_id": "...",
+    "area_fractions": {
+      "target_overlap": "...", "source_overlap": "...",
+      "pass": "...", "reject": "...",
+      "uninspected": "...", "no_previous": "..."
+    },
+    "inherited": true,
+    "intersecting_previous_face_ids": ["..."],
+    "pass_credentials": [{"face_id": "...", "fraction": "..."}],
+    "transferred_ticket_ids": ["..."]
+  }],
+  "reinspection_face_ids": ["..."],
+  "tickets": [{
+    "ticket_id": "...",
+    "previous_face_id": "...",
+    "transfers": [{"face_id": "...", "fraction": "..."}],
+    "missing": "...",
+    "ambiguous": "...",
+    "fully_transferred": true
+  }]
+}
+```
+
+约定：
+
+- `current_faces` 按 `face_id` 字典序；每个新面都出现。`area_fractions` 固定包含上述六个键。
+- `inherited` 仅当 `pass` 比例恰为 1 时为真——整张新面是最小可签单元；缺证区域不会被自动签发部分合格。其余所有面（含 `reject`、`uninspected`、任何重叠或无旧覆盖）都进 `reinspection_face_ids`（字典序）。
+- `intersecting_previous_face_ids`：同检验面、同平面上与该新面有正面积相交的全部旧面 ID，字典序；只有点/边接触的旧面不列入。
+- `pass_credentials`：对 `pass` 类真正贡献凭证的旧面 ID 及各自占该新面总面积的比例，按旧面 ID 字典序。同一张新面可以合法地从多个互不重叠的旧 `pass` 面继承（例如对角线切换后各承一半）。
+- `transferred_ticket_ids`：按后文规则转派进入该面的旧工单 ID，字典序。
+
+## 旧返修工单对账
+
+对账从**每一张**旧 `reject` 面出发，不依赖新版是否能匹配；没有任何新版承接的工单也必须列出。在同检验面、同平面上，对旧返修面做同样的平面分区，逐区统计承接它的新版面数量：
+
+- 恰有一个新版面承接的区域，其面积转派给该面，并进入该面复检记录的 `transferred_ticket_ids`。
+- 零个新版面承接的区域记 `missing`；多个新版面争抢的区域记 `ambiguous`。两部分留在旧工单侧人工追查，绝不权宜地分给其中任一面。
+- 即使同处还有旧 `pass` 或其他凭证，已明确记录的缺陷不抹去；转派只看新版承接是否唯一。
+
+`tickets` 按 `ticket_id` 字典序，每条含旧面 ID、按新面 ID 字典序排列的 `transfers`（比例分母统一为该工单的原旧面面积）、`missing` 与 `ambiguous` 比例，三者合计为 1。`fully_transferred` 仅当两项留置比例都为 0 时为真；它只表示责任全数转派，不等于返修完成。
+
+## 失败与稳定性
+
+输入错误（台账缺项/未知/重复 ID、摘要不符、无效网格、只给一个新参数、台账结构或工单号非法）与发布失败一律退出 2，沿用原子新建语义：不覆盖既有输出、不留半成品报告。正常得出“需复检”或“须人工追查”（`missing`/`ambiguous` 非零）仍是成功，退出 0。等价的网格重排、绕序变更、台账行乱序不改变 `inspection_handoff`：平面键、直线方向与全部遍历顺序都与输入顺序和朝向无关。
+
