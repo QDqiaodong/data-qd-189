@@ -2,12 +2,14 @@ from fractions import Fraction
 
 from .handoff import build_handoff
 from .layerplan import build_layer_plan
+from .loadplan import build_load_plan
 from .material import material as material_report
 from .model import validate
 from .shells import analyze
 
 
-def process(data, material=False, handoff=None, layer_plan=None):
+def process(data, material=False, handoff=None, layer_plan=None,
+            load_plan=None):
     """Analyze a mesh.
 
     With ``material=False`` (the default) the result is byte-for-byte the
@@ -20,9 +22,13 @@ def process(data, material=False, handoff=None, layer_plan=None):
 
     When ``layer_plan`` is given it must be the parsed work order (a strict
     JSON object with ``z_levels`` and ``min_support_ratio``); the historical
-    report is retained and a ``layer_plan`` block is added.  The material
-    settlement is computed internally either way; the ``material`` block
-    itself is only published when ``material=True``.
+    report is retained and a ``layer_plan`` block is added.
+
+    When ``load_plan`` is given it must be the parsed load work order (a
+    strict JSON object with ``deck_z``, ``beams`` and ``loads``); the
+    historical report is retained and a ``load_plan`` block is added.  The
+    material settlement is computed internally either way; the ``material``
+    block itself is only published when ``material=True``.
     """
     vertices, faces = validate(data)
     shells = analyze(vertices, faces)
@@ -40,7 +46,7 @@ def process(data, material=False, handoff=None, layer_plan=None):
                           'sum_absolute_shell_volume':
                               str(sum(known, Fraction(0))) if len(known) == len(shells) else None}}
     settled = None
-    if material or layer_plan is not None:
+    if material or layer_plan is not None or load_plan is not None:
         settled = material_report(vertices, shells)
     if material:
         result['material'] = settled
@@ -50,4 +56,6 @@ def process(data, material=False, handoff=None, layer_plan=None):
             vertices, faces, previous_data, ledger)
     if layer_plan is not None:
         result['layer_plan'] = build_layer_plan(vertices, settled, layer_plan)
+    if load_plan is not None:
+        result['load_plan'] = build_load_plan(vertices, settled, load_plan)
     return result

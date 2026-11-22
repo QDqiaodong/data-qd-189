@@ -1,0 +1,145 @@
+{
+ "beams": [
+  {
+   "beam_id": "A",
+   "limit": "3"
+  },
+  {
+   "beam_id": "B",
+   "limit": "5"
+  },
+  {
+   "beam_id": "C",
+   "limit": "10"
+  }
+ ],
+ "deck_z": "0",
+ "loads": [
+  {
+   "pads": [
+    {
+     "beam_id": "A",
+     "limit": "4",
+     "pad_id": "pa00",
+     "xy": [
+      "0",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "B",
+     "limit": "4",
+     "pad_id": "pa10",
+     "xy": [
+      "2",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "B",
+     "limit": "4",
+     "pad_id": "pa01",
+     "xy": [
+      "0",
+      "2"
+     ]
+    },
+    {
+     "beam_id": "A",
+     "limit": "4",
+     "pad_id": "pa11",
+     "xy": [
+      "2",
+      "2"
+     ]
+    }
+   ],
+   "root_component_id": "baf00",
+   "unit_weight": "1"
+  },
+  {
+   "pads": [
+    {
+     "beam_id": "A",
+     "limit": "4",
+     "pad_id": "pb00",
+     "xy": [
+      "4",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "B",
+     "limit": "4",
+     "pad_id": "pb10",
+     "xy": [
+      "6",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "B",
+     "limit": "4",
+     "pad_id": "pb01",
+     "xy": [
+      "4",
+      "2"
+     ]
+    },
+    {
+     "beam_id": "A",
+     "limit": "4",
+     "pad_id": "pb11",
+     "xy": [
+      "6",
+      "2"
+     ]
+    }
+   ],
+   "root_component_id": "bbf00",
+   "unit_weight": "1"
+  },
+  {
+   "pads": [
+    {
+     "beam_id": "C",
+     "limit": "4",
+     "pad_id": "pc00",
+     "xy": [
+      "8",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "C",
+     "limit": "4",
+     "pad_id": "pc10",
+     "xy": [
+      "10",
+      "0"
+     ]
+    },
+    {
+     "beam_id": "C",
+     "limit": "4",
+     "pad_id": "pc01",
+     "xy": [
+      "8",
+      "2"
+     ]
+    },
+    {
+     "beam_id": "C",
+     "limit": "4",
+     "pad_id": "pc11",
+     "xy": [
+      "10",
+      "2"
+     ]
+    }
+   ],
+   "root_component_id": "bcf00",
+   "unit_weight": "1"
+  }
+ ]
+}
