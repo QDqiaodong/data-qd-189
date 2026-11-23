@@ -1,0 +1,34 @@
+{
+  "reference": {
+    "vertices": [
+      {"id": "r_origin", "position": ["0", "0", "0"]},
+      {"id": "r_b", "position": ["3", "0", "0"]},
+      {"id": "u0", "position": ["20", "0", "0"]},
+      {"id": "u1", "position": ["21", "0", "0"]},
+      {"id": "u2", "position": ["20", "1", "0"]},
+      {"id": "u3", "position": ["20", "0", "1"]}
+    ],
+    "faces": [
+      {"id": "g0", "vertices": ["u0", "u2", "u1"]},
+      {"id": "g1", "vertices": ["u0", "u1", "u3"]},
+      {"id": "g2", "vertices": ["u0", "u3", "u2"]},
+      {"id": "g3", "vertices": ["u1", "u2", "u3"]}
+    ]
+  },
+  "clamp": {
+    "yaw_degrees": [0],
+    "dx": ["-1", "1"],
+    "dy": ["0", "1"]
+  },
+  "datums": [
+    {"reference_vertex_id": "r_origin", "source_vertex_id": "s_datum",
+     "tolerance": ["1", "1", "0"]}
+  ],
+  "detections": ["s_p", "s_q"],
+  "features": [
+    {"feature_id": "feat_a", "reference_vertex_id": "r_origin",
+     "tolerance": ["1", "1", "0"], "candidate_detection_ids": ["s_p", "s_q"]},
+    {"feature_id": "feat_b", "reference_vertex_id": "r_b",
+     "tolerance": ["1", "1", "0"], "candidate_detection_ids": ["s_p", "s_q"]}
+  ]
+}

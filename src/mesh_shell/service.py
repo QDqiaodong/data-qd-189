@@ -1,5 +1,6 @@
 from fractions import Fraction
 
+from .featurefit import build_feature_fit
 from .handoff import build_handoff
 from .layerplan import build_layer_plan
 from .loadplan import build_load_plan
@@ -10,7 +11,7 @@ from .shells import analyze
 
 
 def process(data, material=False, handoff=None, layer_plan=None,
-            load_plan=None, scan_plan=None):
+            load_plan=None, scan_plan=None, feature_fit=None):
     """Analyze a mesh.
 
     With ``material=False`` (the default) the result is byte-for-byte the
@@ -36,6 +37,12 @@ def process(data, material=False, handoff=None, layer_plan=None,
     historical report is retained and a ``scan_plan`` block is added.  The
     material settlement is reused internally and the material block itself
     is only published when ``material=True``.
+
+    When ``feature_fit`` is given it must be the parsed feature-fit work
+    order (a strict JSON object with ``reference``, ``clamp``, ``datums``,
+    ``detections`` and ``features``); the historical report is retained and
+    a ``feature_fit`` block is added.  The block is purely geometric over
+    the two meshes' vertices and does not depend on the material settlement.
     """
     vertices, faces = validate(data)
     shells = analyze(vertices, faces)
@@ -69,4 +76,6 @@ def process(data, material=False, handoff=None, layer_plan=None,
     if scan_plan is not None:
         result['scan_plan'] = build_scan_plan(vertices, faces, shells,
                                               settled, scan_plan)
+    if feature_fit is not None:
+        result['feature_fit'] = build_feature_fit(vertices, feature_fit)
     return result

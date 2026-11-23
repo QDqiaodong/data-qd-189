@@ -23,6 +23,10 @@ def main(argv=None):
     parser.add_argument('--scan-plan',
                         help='scan forensics work order JSON '
                              '(targets, poses, max_passes)')
+    parser.add_argument('--feature-fit',
+                        help='feature-fit acceptance work order JSON '
+                             '(reference, clamp, datums, detections, '
+                             'features)')
     args = parser.parse_args(argv)
     if (args.previous is None) != (args.inspection_ledger is None):
         print('error: --previous and --inspection-ledger must be used together',
@@ -36,9 +40,11 @@ def main(argv=None):
         plan = load(args.layer_plan) if args.layer_plan is not None else None
         load_order = load(args.load_plan) if args.load_plan is not None else None
         scan_order = load(args.scan_plan) if args.scan_plan is not None else None
+        fit_order = (load(args.feature_fit)
+                     if args.feature_fit is not None else None)
         result = process(data, material=args.material, handoff=handoff,
                          layer_plan=plan, load_plan=load_order,
-                         scan_plan=scan_order)
+                         scan_plan=scan_order, feature_fit=fit_order)
         publish(args.output, result)
     except (OSError, ValueError, UnicodeError, RecursionError) as error:
         print(f'error: {error}', file=sys.stderr)

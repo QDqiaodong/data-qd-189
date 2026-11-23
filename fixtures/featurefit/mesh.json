@@ -1,0 +1,17 @@
+{
+  "vertices": [
+    {"id": "s_datum", "position": ["0", "0", "0"]},
+    {"id": "s_p", "position": ["1", "0", "0"]},
+    {"id": "s_q", "position": ["2", "0", "0"]},
+    {"id": "t0", "position": ["10", "0", "0"]},
+    {"id": "t1", "position": ["11", "0", "0"]},
+    {"id": "t2", "position": ["10", "1", "0"]},
+    {"id": "t3", "position": ["10", "0", "1"]}
+  ],
+  "faces": [
+    {"id": "f0", "vertices": ["t0", "t2", "t1"]},
+    {"id": "f1", "vertices": ["t0", "t1", "t3"]},
+    {"id": "f2", "vertices": ["t0", "t3", "t2"]},
+    {"id": "f3", "vertices": ["t1", "t2", "t3"]}
+  ]
+}
