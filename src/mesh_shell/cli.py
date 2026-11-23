@@ -20,6 +20,9 @@ def main(argv=None):
                         help='laying work order JSON (z_levels, min_support_ratio)')
     parser.add_argument('--load-plan',
                         help='load work order JSON (deck_z, beams, loads)')
+    parser.add_argument('--scan-plan',
+                        help='scan forensics work order JSON '
+                             '(targets, poses, max_passes)')
     args = parser.parse_args(argv)
     if (args.previous is None) != (args.inspection_ledger is None):
         print('error: --previous and --inspection-ledger must be used together',
@@ -32,8 +35,10 @@ def main(argv=None):
             handoff = (load(args.previous), load(args.inspection_ledger))
         plan = load(args.layer_plan) if args.layer_plan is not None else None
         load_order = load(args.load_plan) if args.load_plan is not None else None
+        scan_order = load(args.scan_plan) if args.scan_plan is not None else None
         result = process(data, material=args.material, handoff=handoff,
-                         layer_plan=plan, load_plan=load_order)
+                         layer_plan=plan, load_plan=load_order,
+                         scan_plan=scan_order)
         publish(args.output, result)
     except (OSError, ValueError, UnicodeError, RecursionError) as error:
         print(f'error: {error}', file=sys.stderr)
